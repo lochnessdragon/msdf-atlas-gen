@@ -1,0 +1,4 @@
+manifest_version = 0
+
+[dependencies]
+msdfgen = "gh:lochnessdragon/msdfgen" # track main branch @ latest for now
