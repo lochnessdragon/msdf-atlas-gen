@@ -13,6 +13,7 @@ option(MSDF_ATLAS_STRIPPED "Enable font loading ONLY (i.e. remove dependency on 
 option(BUILD_SHARED_LIBS "Generate dynamic library files instead of static" OFF)
 
 if(NOT MSDF_ATLAS_MSDFGEN_EXTERNAL)
+    set(MSDFGEN_DISABLE_SVG ON CACHE BOOL "Disable unused SVG functionality to minimize dependencies")
     set(MSDFGEN_CORE_ONLY OFF CACHE INTERNAL "Only build the core msdfgen library with no dependencies (disabled for msdf-atlas-gen)" FORCE)
     set(MSDFGEN_BUILD_STANDALONE OFF CACHE BOOL "Build the msdfgen standalone executable")
     set(MSDFGEN_USE_VCPKG ${MSDF_ATLAS_USE_VCPKG} CACHE INTERNAL "Use vcpkg package manager to link msdfgen project dependencies" FORCE)
@@ -88,7 +89,7 @@ else()
     add_subdirectory(msdfgen)
 endif()
 find_package(Threads REQUIRED)
-if(NOT TARGET PNG::PNG AND NOT MSDF_ATLAS_STRIPPED)
+if(NOT MSDFGEN_DISABLE_PNG AND NOT TARGET PNG::PNG)
     find_package(PNG REQUIRED)
 endif()
 
@@ -120,7 +121,7 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT m
 
 target_compile_features(msdf-atlas-gen PUBLIC cxx_std_11)
 target_link_libraries(msdf-atlas-gen PRIVATE Threads::Threads)
-if(NOT MSDF_ATLAS_STRIPPED)
+if(NOT MSDFGEN_DISABLE_PNG)
     target_link_libraries(msdf-atlas-gen PRIVATE PNG::PNG)
 endif()
 target_link_libraries(msdf-atlas-gen PUBLIC msdfgen::msdfgen)
