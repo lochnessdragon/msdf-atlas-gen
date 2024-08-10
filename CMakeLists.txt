@@ -9,6 +9,7 @@ option(MSDF_ATLAS_NO_ARTERY_FONT "Disable Artery Font export and do not require 
 option(MSDF_ATLAS_MSDFGEN_EXTERNAL "Do not build the msdfgen submodule but find it as an external package" OFF)
 option(MSDF_ATLAS_INSTALL "Generate installation target" OFF)
 option(MSDF_ATLAS_DYNAMIC_RUNTIME "Link dynamic runtime library instead of static" OFF)
+option(MSDF_ATLAS_STRIPPED "Enable font loading ONLY (i.e. remove dependency on lib png and tinyxml2" OFF) # this is really hacky, but I don't want to rewrite a bunch of code.
 option(BUILD_SHARED_LIBS "Generate dynamic library files instead of static" OFF)
 
 if(NOT MSDF_ATLAS_MSDFGEN_EXTERNAL)
@@ -20,6 +21,11 @@ if(NOT MSDF_ATLAS_MSDFGEN_EXTERNAL)
     set(MSDFGEN_USE_SKIA ${MSDF_ATLAS_USE_SKIA} CACHE INTERNAL "Build msdfgen with the Skia library" FORCE)
     set(MSDFGEN_INSTALL ${MSDF_ATLAS_INSTALL} CACHE INTERNAL "Generate installation target for msdfgen" FORCE)
     set(MSDFGEN_DYNAMIC_RUNTIME ${MSDF_ATLAS_DYNAMIC_RUNTIME} CACHE INTERNAL "Link dynamic runtime library instead of static for msdfgen" FORCE)
+
+    if(MSDF_ATLAS_STRIPPED)
+        set(MSDFGEN_DISABLE_PNG ON CACHE INTERNAL "Disable PNG" FORCE)
+        set(MSDFGEN_DISABLE_SVG ON CACHE INTERNAL "Disable SVG" FORCE)
+    endif()
 endif()
 
 get_property(MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -82,7 +88,7 @@ else()
     add_subdirectory(msdfgen)
 endif()
 find_package(Threads REQUIRED)
-if(NOT TARGET PNG::PNG)
+if(NOT TARGET PNG::PNG AND NOT MSDF_ATLAS_STRIPPED)
     find_package(PNG REQUIRED)
 endif()
 
@@ -113,7 +119,10 @@ endif()
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT msdf-atlas-gen)
 
 target_compile_features(msdf-atlas-gen PUBLIC cxx_std_11)
-target_link_libraries(msdf-atlas-gen PRIVATE Threads::Threads PNG::PNG)
+target_link_libraries(msdf-atlas-gen PRIVATE Threads::Threads)
+if(NOT MSDF_ATLAS_STRIPPED)
+    target_link_libraries(msdf-atlas-gen PRIVATE PNG::PNG)
+endif()
 target_link_libraries(msdf-atlas-gen PUBLIC msdfgen::msdfgen)
 
 if(BUILD_SHARED_LIBS AND WIN32)
